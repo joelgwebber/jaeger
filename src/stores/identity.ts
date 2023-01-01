@@ -1,4 +1,11 @@
-import { timelinesHome } from '$lib/api/api';
+import {
+	timelinesHome,
+	timelinesList,
+	timelinesPublic,
+	timelinesTag,
+	type TimelinesPublicParams,
+	type TimelinesTagParams
+} from '$lib/api/api';
 import type { Account, Status } from '$lib/api/entities';
 import { get } from 'svelte/store';
 import { defineLocalStore } from './stores';
@@ -13,7 +20,7 @@ export type Identity = {
 	clientSecret?: string;
 	accessToken?: string;
 
-	timelines: TimelineParams[];
+	feeds: { [name: string]: TimelineParams };
 	curTimeline: number;
 };
 
@@ -33,7 +40,7 @@ export function ensureIdent(domain: string): Identity {
 		if (!(domain in idents)) {
 			idents[domain] = {
 				domain: domain,
-				timelines: defaultTimelines(),
+				feeds: defaultFeeds(),
 				curTimeline: 0
 			};
 		}
@@ -43,31 +50,35 @@ export function ensureIdent(domain: string): Identity {
 	return get(identities)[domain];
 }
 
-function defaultTimelines(): TimelineParams[] {
-	return [
-		{
+function defaultFeeds(): { [name: string]: TimelineParams } {
+	return {
+		Home: {
 			name: 'Home',
 			type: 'home'
 		},
-		{
+		Local: {
 			name: 'Local',
 			type: 'public',
-			local: true
+			params: {
+				local: true
+			}
 		},
-		{
+		Federated: {
 			name: 'Federated',
 			type: 'public',
-			local: true,
-			remote: true
+			params: {
+				remote: false // This is weird, but it's what the existing UI does.
+			}
 		},
-		{
+		'Game development': {
 			name: 'Game development',
 			type: 'tag',
-			local: true,
-			remote: true,
-			anyTags: ['gamedev', 'indiedev', 'pixelart', 'gameart']
+			tag: 'gamedev',
+			params: {
+				any: ['indiedev', 'pixelart', 'gameart']
+			}
 		}
-	];
+	};
 }
 
 export async function fetchTimeline(domain: string, timeline: TimelineParams): Promise<Status[]> {
@@ -75,18 +86,19 @@ export async function fetchTimeline(domain: string, timeline: TimelineParams): P
 		case 'home':
 			return timelinesHome(domain);
 		case 'public':
-			break;
+			return timelinesPublic(domain, timeline.params);
 		case 'tag':
-			break;
+			return timelinesTag(domain, timeline.tag, timeline.params);
 		case 'list':
+			return timelinesList(domain, timeline.listId);
 			break;
 	}
 	return [];
 }
 
 export type TimelineParams =
-	| PublicTimelineParams
 	| HomeTimelineParams
+	| PublicTimelineParams
 	| TagTimelineParams
 	| ListTimelineParams;
 
@@ -98,23 +110,14 @@ export interface HomeTimelineParams {
 export interface PublicTimelineParams {
 	name: string;
 	type: 'public';
-
-	local?: boolean;
-	remote?: boolean;
-	mediaOnly?: boolean;
+	params: TimelinesPublicParams;
 }
 
 export interface TagTimelineParams {
 	name: string;
 	type: 'tag';
-
-	local?: boolean;
-	remote?: boolean;
-	mediaOnly?: boolean;
-
-	anyTags?: string[];
-	allTags?: string[];
-	noneTags?: string[];
+	tag: string;
+	params: TimelinesTagParams;
 }
 
 export interface ListTimelineParams {

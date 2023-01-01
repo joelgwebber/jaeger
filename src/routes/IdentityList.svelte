@@ -7,7 +7,6 @@
 
 	let domains: string[];
 	$: domains = Object.keys($identities);
-	console.log(get(page).params, get(page).data);
 </script>
 
 <div>

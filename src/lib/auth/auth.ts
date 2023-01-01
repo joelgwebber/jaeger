@@ -13,7 +13,7 @@ const Scopes = 'read write follow push';
 const ClientName = 'Jaeger';
 
 function authRedirectUri(domain: string): string {
-	return `${location.origin}/app/${domain}/auth`;
+	return `${location.origin}/auth/${domain}`;
 }
 
 // Determines whether we _appear_ to be logged in. This is mean to be a quick check, so it only

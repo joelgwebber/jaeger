@@ -8,16 +8,18 @@
 		const domain = $page.params.domain;
 		const code = $page.url.searchParams.get('code');
 		if (code) {
+			console.log('-> finishAuth');
 			let success = await finishAuth(domain, code);
 			if (success) {
 				// All good. Go back to the app.
+				console.log('<- finishAuth');
 				goto(`/app/${domain}`, { replaceState: true });
 				return;
 			}
 		}
 
-		// Something went wonky. Try logging in again.
-		goto('/login', { replaceState: true });
+		// Something went wonky. Go home.
+		goto('/', { replaceState: true });
 	});
 </script>
 

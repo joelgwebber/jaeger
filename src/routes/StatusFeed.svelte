@@ -19,13 +19,12 @@
 		stats.set([]);
 		if (isLoggedIn(domain)) {
 			const ident = ensureIdent(domain);
-			stats.set(await fetchTimeline(domain, ident.timelines[0]));
+			stats.set(await fetchTimeline(domain, ident.feeds[feed]));
 		}
 	}
 </script>
 
 <div class="Feed">
-	{#if console.log('render') === undefined}...{/if}
 	{#each $stats as stat (stat.id)}
 		<div class="Item">
 			<div>{stat.created_at}</div>

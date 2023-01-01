@@ -1,11 +1,34 @@
 import { clearCredentials, isLoggedIn } from '$lib/auth/auth';
 import { reqGet, type Headers } from '$lib/fetch';
 import { basename } from '$lib/utils';
-import { ensureIdent, type Identity } from '$stores/identity';
+import { ensureIdent } from '$stores/identity';
 import type { Status } from './entities';
 
-function apiUrl(domain: string, endpoint: string): string {
-	return `${basename(domain)}/api/v1/${endpoint}`;
+function apiUrl(domain: string, endpoint: string, params?: { [key: string]: any }): string {
+	let url = `${basename(domain)}/api/v1/${endpoint}`;
+	if (params) {
+		url += '?';
+		for (let key in params) {
+			const val = params[key];
+			switch (typeof val) {
+				case 'undefined':
+					break;
+				case 'object':
+					if (!("length" in val)) {
+						throw new Error(`expected array for value ${val}`);
+					}
+					const arr = val as Array<string>;
+					for (let i = 0; i < arr.length; i++) {
+						url += `${key}[]=${encodeURIComponent(val)}&`;
+					}
+					break;
+				default:
+					url += `${key}=${encodeURIComponent(val)}&`;
+					break;
+			}
+		}
+	}
+	return url;
 }
 
 function ensureLogin(domain: string) {
@@ -21,6 +44,21 @@ function apiHeaders(domain: string): Headers {
 	};
 }
 
+export type TimelinesPublicParams = {
+	local?: boolean;
+	remote?: boolean;
+	only_media?: boolean;
+};
+
+export type TimelinesTagParams = {
+	any?: string[];
+	all?: string[];
+	none?: string[];
+	local?: boolean;
+	remote?: boolean;
+	only_media?: boolean;
+};
+
 // ...
 export async function timelinesHome(domain: string): Promise<Status[]> {
 	const json = await reqGet(apiUrl(domain, `timelines/home`), apiHeaders(domain));
@@ -28,8 +66,23 @@ export async function timelinesHome(domain: string): Promise<Status[]> {
 }
 
 // ...
-export async function timelinesTag(domain: string, tag: string): Promise<Status[]> {
-	const json = await reqGet(apiUrl(domain, `timelines/tag/:${tag}`), apiHeaders(domain));
+export async function timelinesPublic(
+	domain: string,
+	params: TimelinesPublicParams
+): Promise<Status[]> {
+	const json = await reqGet(apiUrl(domain, `timelines/public`, params), apiHeaders(domain));
+	return json as Status[];
+}
+
+// ...
+export async function timelinesTag(domain: string, tag: string, params: TimelinesTagParams): Promise<Status[]> {
+	const json = await reqGet(apiUrl(domain, `timelines/tag/${tag}`, params), apiHeaders(domain));
+	return json as Status[];
+}
+
+// ...
+export async function timelinesList(domain: string, listId: string): Promise<Status[]> {
+	const json = await reqGet(apiUrl(domain, `timelines/list/${listId}`), apiHeaders(domain));
 	return json as Status[];
 }
 
