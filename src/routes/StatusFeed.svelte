@@ -3,6 +3,7 @@
 	import { isLoggedIn } from '$lib/auth/auth';
 	import { ensureIdent, fetchTimeline } from '$stores/identity';
 	import { writable } from 'svelte/store';
+	import StatusCard from './StatusCard.svelte';
 
 	export let domain: string;
 	export let feed: string;
@@ -26,20 +27,12 @@
 
 <div class="Feed">
 	{#each $stats as stat (stat.id)}
-		<div class="Item">
-			<div>{stat.created_at}</div>
-			<div>{@html stat.content}</div>
-		</div>
+		<StatusCard {stat} />
 	{/each}
 </div>
 
 <style>
 	.Feed {
 		background-color: white;
-	}
-
-	.Feed > .Item {
-		margin-top: 12px;
-		border-bottom: 1px solid gray;
 	}
 </style>

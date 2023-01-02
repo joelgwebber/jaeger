@@ -14,7 +14,7 @@ function apiUrl(domain: string, endpoint: string, params?: { [key: string]: any 
 				case 'undefined':
 					break;
 				case 'object':
-					if (!("length" in val)) {
+					if (!('length' in val)) {
 						throw new Error(`expected array for value ${val}`);
 					}
 					const arr = val as Array<string>;
@@ -45,18 +45,26 @@ function apiHeaders(domain: string): Headers {
 }
 
 export type TimelinesPublicParams = {
-	local?: boolean;
-	remote?: boolean;
-	only_media?: boolean;
+	local?: boolean; // TODO
+	remote?: boolean; // TODO
+	only_media?: boolean; // TODO
+	max_id?: string; // Return results older than ID.
+	since_id?: string; //  Return results newer than ID.
+	min_id?: string; //  Return results immediately newer than ID.
+	limit?: number; //  Maximum number of results to return. Defaults to 20 statuses. Max 40 statuses.
 };
 
 export type TimelinesTagParams = {
-	any?: string[];
-	all?: string[];
-	none?: string[];
-	local?: boolean;
-	remote?: boolean;
-	only_media?: boolean;
+	any?: string[]; // TODO
+	all?: string[]; // TODO
+	none?: string[]; // TODO
+	local?: boolean; // TODO
+	remote?: boolean; // TODO
+	only_media?: boolean; // TODO
+	max_id?: string; // Return results older than ID.
+	since_id?: string; //  Return results newer than ID.
+	min_id?: string; //  Return results immediately newer than ID.
+	limit?: number; //  Maximum number of results to return. Defaults to 20 statuses. Max 40 statuses.
 };
 
 // ...
@@ -75,7 +83,11 @@ export async function timelinesPublic(
 }
 
 // ...
-export async function timelinesTag(domain: string, tag: string, params: TimelinesTagParams): Promise<Status[]> {
+export async function timelinesTag(
+	domain: string,
+	tag: string,
+	params: TimelinesTagParams
+): Promise<Status[]> {
 	const json = await reqGet(apiUrl(domain, `timelines/tag/${tag}`, params), apiHeaders(domain));
 	return json as Status[];
 }
