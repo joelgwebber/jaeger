@@ -44,32 +44,28 @@ function apiHeaders(domain: string): Headers {
 	};
 }
 
-export type TimelinesPublicParams = {
-	local?: boolean; // TODO
-	remote?: boolean; // TODO
-	only_media?: boolean; // TODO
+export interface TimelinesParams {
 	max_id?: string; // Return results older than ID.
 	since_id?: string; //  Return results newer than ID.
 	min_id?: string; //  Return results immediately newer than ID.
 	limit?: number; //  Maximum number of results to return. Defaults to 20 statuses. Max 40 statuses.
 };
 
-export type TimelinesTagParams = {
+export interface TimelinesPublicParams extends TimelinesParams {
+	local?: boolean; // TODO
+	remote?: boolean; // TODO
+	only_media?: boolean; // TODO
+};
+
+export interface TimelinesTagParams extends TimelinesPublicParams {
 	any?: string[]; // TODO
 	all?: string[]; // TODO
 	none?: string[]; // TODO
-	local?: boolean; // TODO
-	remote?: boolean; // TODO
-	only_media?: boolean; // TODO
-	max_id?: string; // Return results older than ID.
-	since_id?: string; //  Return results newer than ID.
-	min_id?: string; //  Return results immediately newer than ID.
-	limit?: number; //  Maximum number of results to return. Defaults to 20 statuses. Max 40 statuses.
 };
 
 // ...
-export async function timelinesHome(domain: string): Promise<Status[]> {
-	const json = await reqGet(apiUrl(domain, `timelines/home`), apiHeaders(domain));
+export async function timelinesHome(domain: string, params: TimelinesParams): Promise<Status[]> {
+	const json = await reqGet(apiUrl(domain, `timelines/home`, params), apiHeaders(domain));
 	return json as Status[];
 }
 
@@ -93,8 +89,8 @@ export async function timelinesTag(
 }
 
 // ...
-export async function timelinesList(domain: string, listId: string): Promise<Status[]> {
-	const json = await reqGet(apiUrl(domain, `timelines/list/${listId}`), apiHeaders(domain));
+export async function timelinesList(domain: string, listId: string, params: TimelinesPublicParams): Promise<Status[]> {
+	const json = await reqGet(apiUrl(domain, `timelines/list/${listId}`, params), apiHeaders(domain));
 	return json as Status[];
 }
 

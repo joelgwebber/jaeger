@@ -1,35 +1,57 @@
 <script lang="ts">
 	import type { Status } from '$lib/api/entities';
-	import { isLoggedIn } from '$lib/auth/auth';
-	import { ensureIdent, fetchTimeline } from '$stores/identity';
-	import { writable } from 'svelte/store';
+	import {
+		ensureIdent,
+		fillFeedCache,
+		getFeedCache,
+		type FeedCache,
+		type FeedParams,
+		type FeedRange
+	} from '$stores/identity';
+	import type { Unsubscriber, Writable } from 'svelte/store';
 	import StatusCard from './StatusCard.svelte';
 
 	export let domain: string;
 	export let feed: string;
 
-	let stats = writable<Status[]>([]);
+	let unsub: Unsubscriber;
+	let params: FeedParams;
+	let cache: Writable<FeedCache>;
+	let stats: Status[];
+	let latest = new Date();
 
 	$: {
-		// Fetch the feed whenever domain/feed change.
-		fetchFeed(domain, feed);
+		// Unsubscribe from any existing feed.
+		if (unsub) {
+			unsub();
+		}
+
+		// Change the timeline whenever domain/feed change.
+		const ident = ensureIdent(domain);
+		params = ident.feeds[feed];
+		cache = getFeedCache(domain, ident.feeds[feed]);
+		unsub = cache.subscribe((value) => {
+			if (latest.getDate() == 0) {
+				latest = new Date(value.stats[0].created_at);
+			}
+			stats = value.stats.filter(stat => new Date(stat.created_at).getDate() < latest.getDate());
+		});
+		latest.setDate(0);
 	}
 
-	// TODO: The feed part
-	async function fetchFeed(domain: string, feed: string) {
-		stats.set([]);
-		if (isLoggedIn(domain)) {
-			const ident = ensureIdent(domain);
-			stats.set(await fetchTimeline(domain, ident.feeds[feed]));
-		}
+	function moar(newer: boolean) {
+		let range: FeedRange = { limit: 20, newer: newer };
+		fillFeedCache(domain, params, range);
 	}
 </script>
 
+<button on:click={() => moar(true)}>MOAR</button>
 <div class="Feed">
-	{#each $stats as stat (stat.id)}
+	{#each stats as stat (stat.id)}
 		<StatusCard {stat} />
 	{/each}
 </div>
+<button on:click={() => moar(false)}>MOAR</button>
 
 <style>
 	.Feed {
